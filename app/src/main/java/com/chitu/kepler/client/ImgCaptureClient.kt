@@ -17,6 +17,7 @@ class ImgCaptureClient(private val context: Context) {
     private lateinit var scheduledExecutorService: ScheduledExecutorService
 
     private var imageCapture: ImageCapture? = null
+    private val file = File(context.filesDir, "kepler.jpg")
 
     fun init() {
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -27,6 +28,8 @@ class ImgCaptureClient(private val context: Context) {
         scheduledExecutorService.scheduleWithFixedDelay({
             captureImage()
         }, 0, 2, TimeUnit.SECONDS)
+
+        file.deleteOnExit()
     }
 
     fun stop() {
@@ -37,8 +40,7 @@ class ImgCaptureClient(private val context: Context) {
         this.imageCapture = imageCapture
     }
 
-    private fun captureImage() {
-        val file = File(context.filesDir, "kepler.jpg")
+    fun captureImage() {
         val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
 
         imageCapture?.takePicture(outputOptions, cameraExecutor, object :
@@ -58,7 +60,6 @@ class ImgCaptureClient(private val context: Context) {
     }
 
     fun takeImage(): ByteArray {
-        val file = File(context.filesDir, "kepler.jpg")
         val stream = FileInputStream(file).use { inputStream ->
             inputStream.readBytes()
         }

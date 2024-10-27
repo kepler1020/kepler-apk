@@ -41,8 +41,8 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
                 // Toast.makeText(context, "ZhiPu-GLM message error: ${response.error}", Toast.LENGTH_SHORT).show()
             }
             "event" -> {
+                Log.d(TAG, "response content: $response")
                 if (message.content == "finish") {
-                    Log.d(TAG, "response content: $response")
                     callback(message.content)
                 }
             }
@@ -131,6 +131,7 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
 
         fun disconnect() {
             client.dispatcher.executorService.shutdown()
+            wsClient?.close(0, "close app")
         }
 
         companion object {

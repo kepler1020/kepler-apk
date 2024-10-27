@@ -24,14 +24,15 @@ class KeplerClient(private val context: Context) {
 
     fun init() {
         recorderClient = RecorderClient(context).apply {
-            init()
+            init {
+                // imgCaptureClient.captureImage()
+            }
             start()
         }
         imgCaptureClient = ImgCaptureClient(context).apply {
             init()
             start()
         }
-
         audioPlayClient = AudioPlayClient(context).apply {
             init()
         }
@@ -41,7 +42,6 @@ class KeplerClient(private val context: Context) {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-
             while (true) {
                 if (audios.isEmpty()) {
                     delay(100)
@@ -62,7 +62,7 @@ class KeplerClient(private val context: Context) {
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
         scheduledExecutorService.scheduleWithFixedDelay({
             if (audios.isEmpty()) collect()
-        }, 1, 3, TimeUnit.SECONDS)
+        }, 1, FIXED_INTERVAL, TimeUnit.SECONDS)
     }
 
     fun start() {
@@ -92,5 +92,9 @@ class KeplerClient(private val context: Context) {
         val b64Image = Base64.encodeToString(image, Base64.NO_WRAP)
 
         zhiPuAiClient.sendMessage(b64Image, b64Audio)
+    }
+
+    companion object {
+        private const val FIXED_INTERVAL = 3L
     }
 }
