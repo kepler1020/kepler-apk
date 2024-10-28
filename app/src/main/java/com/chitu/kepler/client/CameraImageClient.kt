@@ -11,37 +11,36 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-class ImgCaptureClient(private val context: Context) {
-
+class CameraImageClient(private val context: Context) {
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var scheduledExecutorService: ScheduledExecutorService
 
     private var imageCapture: ImageCapture? = null
-    private val file = File(context.filesDir, "kepler.jpg")
+    private val imageFile = File(context.filesDir, "kepler.jpg")
+    private val imageByte = byteArrayOf()
 
     fun init() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     }
 
-    fun start() {
+    fun start(imageCapture: ImageCapture) {
         scheduledExecutorService.scheduleWithFixedDelay({
             captureImage()
         }, 0, 2, TimeUnit.SECONDS)
 
-        file.deleteOnExit()
+        imageFile.deleteOnExit()
+        this.imageCapture = imageCapture
     }
 
     fun stop() {
         scheduledExecutorService.shutdown()
     }
 
-    fun setImageCapture(imageCapture: ImageCapture?) {
-        this.imageCapture = imageCapture
-    }
+    private fun captureImage() {
+        if (scheduledExecutorService.isShutdown) return
 
-    fun captureImage() {
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(imageFile).build()
 
         imageCapture?.takePicture(outputOptions, cameraExecutor, object :
             ImageCapture.OnImageSavedCallback {
@@ -50,7 +49,7 @@ class ImgCaptureClient(private val context: Context) {
             }
 
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-              Log.d(TAG, "Photo capture succeeded: ${output.savedUri}")
+              Log.i(TAG, "Photo capture succeeded: ${output.savedUri}")
                 // val image = output.savedUri?.toFile()
                 // val stream = FileInputStream(image).use { inputStream ->
                 //     inputStream.readBytes()
@@ -60,14 +59,14 @@ class ImgCaptureClient(private val context: Context) {
     }
 
     fun takeImage(): ByteArray {
-        val stream = FileInputStream(file).use { inputStream ->
+        val stream = FileInputStream(imageFile).use { inputStream ->
             inputStream.readBytes()
         }
         return stream
     }
 
     companion object {
-        private const val TAG = "RecorderClient"
+        private const val TAG = "CameraImageClient"
         private const val PHOTO_TYPE = "image/jpeg"
     }
 }

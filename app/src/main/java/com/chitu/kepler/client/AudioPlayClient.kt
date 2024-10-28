@@ -29,7 +29,7 @@ class AudioPlayClient(private val context: Context) {
     }
 
     fun play(buffer: ByteArray) {
-        Log.d(TAG, "play pcm data size: ${buffer.size}")
+        Log.i(TAG, "play pcm data size: ${buffer.size}")
 
         player.play()
         player.write(buffer, 0, buffer.size)

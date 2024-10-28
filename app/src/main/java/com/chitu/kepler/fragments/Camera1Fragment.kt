@@ -30,7 +30,6 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraInfo
@@ -51,7 +50,7 @@ import com.chitu.kepler.KEY_EVENT_EXTRA
 import com.chitu.kepler.R
 import com.chitu.kepler.client.KeplerClient
 import com.chitu.kepler.databinding.CameraUiContainerBinding
-import com.chitu.kepler.databinding.FragmentCameraBinding
+import com.chitu.kepler.databinding.FragmentCamera1Binding
 import com.chitu.kepler.utils.simulateClick
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
@@ -70,9 +69,9 @@ typealias LumaListener = (luma: Double) -> Unit
  * - Photo taking
  * - Image analysis
  */
-class CameraFragment : Fragment() {
+class Camera1Fragment : Fragment() {
 
-    private var _fragmentCameraBinding: FragmentCameraBinding? = null
+    private var _fragmentCameraBinding: FragmentCamera1Binding? = null
     private val fragmentCameraBinding get() = _fragmentCameraBinding!!
     private var cameraUiContainerBinding: CameraUiContainerBinding? = null
 
@@ -116,8 +115,8 @@ class CameraFragment : Fragment() {
         override fun onDisplayAdded(displayId: Int) = Unit
         override fun onDisplayRemoved(displayId: Int) = Unit
         override fun onDisplayChanged(displayId: Int) = view?.let { view ->
-            if (displayId == this@CameraFragment.displayId) {
-                Log.d(TAG, "Rotation changed: ${view.display.rotation}")
+            if (displayId == this@Camera1Fragment.displayId) {
+                Log.i(TAG, "Rotation changed: ${view.display.rotation}")
                 imageCapture?.targetRotation = view.display.rotation
                 // imageAnalyzer?.targetRotation = view.display.rotation
             }
@@ -130,7 +129,7 @@ class CameraFragment : Fragment() {
         // user could have removed them while the app was in paused state.
         if (!PermissionsFragment.hasPermissions(requireContext())) {
             Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                CameraFragmentDirections.actionCameraToPermissions()
+                Camera1FragmentDirections.actionCameraToPermissions()
             )
         }
     }
@@ -154,7 +153,7 @@ class CameraFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
+        _fragmentCameraBinding = FragmentCamera1Binding.inflate(inflater, container, false)
         return fragmentCameraBinding.root
     }
 
@@ -168,8 +167,8 @@ class CameraFragment : Fragment() {
         broadcastManager = LocalBroadcastManager.getInstance(view.context)
 
         // Set up the intent filter that will receive events from our main activity
-        val filter = IntentFilter().apply { addAction(KEY_EVENT_ACTION) }
-        broadcastManager.registerReceiver(volumeDownReceiver, filter)
+        // val filter = IntentFilter().apply { addAction(KEY_EVENT_ACTION) }
+        // broadcastManager.registerReceiver(volumeDownReceiver, filter)
 
         // Every time the orientation of device changes, update rotation for use cases
         displayManager.registerDisplayListener(displayListener, null)
@@ -194,8 +193,6 @@ class CameraFragment : Fragment() {
             // Set up the camera and its use cases
             lifecycleScope.launch {
                 setUpCamera()
-
-                keplerClient.start()
             }
         }
     }
@@ -229,10 +226,10 @@ class CameraFragment : Fragment() {
 
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = windowManager.getCurrentWindowMetrics().bounds
-        Log.d(TAG, "Screen metrics: ${metrics.width()} x ${metrics.height()}")
+        Log.i(TAG, "Screen metrics: ${metrics.width()} x ${metrics.height()}")
 
         val screenAspectRatio = aspectRatio(metrics.width(), metrics.height())
-        Log.d(TAG, "Preview aspect ratio: $screenAspectRatio")
+        Log.i(TAG, "Preview aspect ratio: $screenAspectRatio")
 
         val rotation = fragmentCameraBinding.viewFinder.display.rotation
 
@@ -264,8 +261,7 @@ class CameraFragment : Fragment() {
             // during the lifecycle of this use case
             .setTargetRotation(rotation)
             .build()
-
-        keplerClient.setImageCapture(imageCapture)
+        keplerClient.start(imageCapture)
 
         // ImageAnalysis
         // imageAnalyzer = ImageAnalysis.Builder()
@@ -281,7 +277,7 @@ class CameraFragment : Fragment() {
         //             // Values returned from our analyzer are passed to the attached listener
         //             // We log image analysis results here - you should do something useful
         //             // instead!
-        //             Log.d(TAG, "Average luminosity: $luma")
+        //             Log.i(TAG, "Average luminosity: $luma")
         //         })
         //     }
 
@@ -533,7 +529,7 @@ class CameraFragment : Fragment() {
     // }
 
     companion object {
-        private const val TAG = "Kepler"
+        private const val TAG = "Kepler-Camera1"
         private const val RATIO_4_3_VALUE = 4.0 / 3.0
         private const val RATIO_16_9_VALUE = 16.0 / 9.0
     }

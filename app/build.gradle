@@ -89,6 +89,7 @@ dependencies {
 
     // CameraX View class
     implementation "androidx.camera:camera-view:$camerax_version"
+    implementation "androidx.camera:camera-video:$camerax_version"
 
 
     // CameraX Extensions library

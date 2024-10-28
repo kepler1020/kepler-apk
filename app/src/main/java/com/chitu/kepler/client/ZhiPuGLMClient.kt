@@ -21,15 +21,15 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
     private var wsClient: XWebSocket? = null
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
-        Log.d(TAG, "onOpen")
+        Log.i(TAG, "onOpen")
     }
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-        Log.d(TAG, "onMessage, byte")
+        Log.i(TAG, "onMessage, byte")
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Log.d(TAG, "onMessage, string -> ${text.length}")
+        Log.i(TAG, "onMessage, string -> ${text.length}")
 
         val gson = Gson()
         val response = gson.fromJson(text, XResponse::class.java)
@@ -41,14 +41,14 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
                 // Toast.makeText(context, "ZhiPu-GLM message error: ${response.error}", Toast.LENGTH_SHORT).show()
             }
             "event" -> {
-                Log.d(TAG, "response content: $response")
+                Log.i(TAG, "response content: $response")
                 if (message.content == "finish") {
                     callback(message.content)
                 }
             }
             "audio" -> {
                 callback(message.content)
-                Log.d(TAG, "message content: ${message.type}")
+                Log.i(TAG, "message content: ${message.type}")
             }
             else -> {
                 Log.w(TAG, "response: $response")
@@ -57,24 +57,24 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        Log.d(TAG, "onClosing")
+        Log.i(TAG, "onClosing")
         // Toast.makeText(context, "ZhiPu-GLM closing", Toast.LENGTH_SHORT).show()
         wsClient = null
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-        Log.d(TAG, "onClosed")
+        Log.i(TAG, "onClosed")
         // Toast.makeText(context, "ZhiPu-GLM closed", Toast.LENGTH_SHORT).show()
 
         wsClient = null
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        Log.d(TAG, "onFailure")
+        Log.i(TAG, "onFailure")
         // Toast.makeText(context, "ZhiPu-GLM onFailure; $response", Toast.LENGTH_SHORT).show()
 
         t.printStackTrace()
-        Log.d(TAG, "onFailure, $response")
+        Log.i(TAG, "onFailure, $response")
 
     }
 
@@ -83,7 +83,7 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
         wsClient?.connect()
     }
 
-    fun sendMessage(image: String, audio: String) {
+    fun sendImage(image: String, audio: String) {
         if (wsClient == null) connect()
 
         val request = XRequest().apply {
@@ -95,7 +95,22 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
         val message = Gson().toJson(request, XRequest::class.java)
         wsClient?.sendMessage(message)
 
-        Log.d(TAG, "send message to zhipu: ${message.length}")
+        Log.e(TAG, "send image to zhipu: ${message.length}, ${image.length}, ${audio.length}")
+    }
+
+    fun sendVideo(video: String, audio: String) {
+        if (wsClient == null) connect()
+
+        val request = XRequest().apply {
+            videoChunk = video
+            audioChunk = audio
+            control.responseType = "audio"
+        }
+
+        val message = Gson().toJson(request, XRequest::class.java)
+        wsClient?.sendMessage(message)
+
+        Log.e(TAG, "send video to zhipu: ${message.length}, ${video.length}, ${audio.length}")
     }
 
 
@@ -131,7 +146,7 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
 
         fun disconnect() {
             client.dispatcher.executorService.shutdown()
-            wsClient?.close(0, "close app")
+            wsClient?.close(1000, "close app")
         }
 
         companion object {

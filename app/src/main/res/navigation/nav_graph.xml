@@ -27,21 +27,34 @@
 
         <action
             android:id="@+id/action_permissions_to_camera"
-            app:destination="@id/camera_fragment"
+            app:destination="@id/camera1_fragment"
             app:popUpTo="@id/permissions_fragment"
             app:popUpToInclusive="true" />
 
     </fragment>
 
     <fragment
-        android:id="@+id/camera_fragment"
-        android:name="com.chitu.kepler.fragments.CameraFragment"
-        android:label="CameraFragment" >
+        android:id="@+id/camera1_fragment"
+        android:name="com.chitu.kepler.fragments.Camera1Fragment"
+        android:label="Camera1Fragment" >
 
         <action
             android:id="@+id/action_camera_to_permissions"
             app:destination="@id/permissions_fragment"
-            app:popUpTo="@id/camera_fragment"
+            app:popUpTo="@id/camera1_fragment"
+            app:popUpToInclusive="true"/>
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/camera2_fragment"
+        android:name="com.chitu.kepler.fragments.Camera2Fragment"
+        android:label="Camera1Fragment" >
+
+        <action
+            android:id="@+id/action_camera_to_permissions"
+            app:destination="@id/permissions_fragment"
+            app:popUpTo="@id/camera2_fragment"
             app:popUpToInclusive="true"/>
 
     </fragment>

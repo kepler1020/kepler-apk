@@ -1,30 +1,24 @@
 package com.chitu.kepler.client
 
 import android.content.Context
-import android.media.AudioFormat
-import android.media.AudioTrack
 import android.util.Log
 import tech.oom.idealrecorder.IdealRecorder
 import tech.oom.idealrecorder.StatusListener
 import tech.oom.idealrecorder.utils.BytesTransUtil
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.OutputStream
 import kotlin.math.abs
 
-class RecorderClient(private val context: Context) : StatusListener() {
+class AudioRecordClient(private val context: Context) : StatusListener() {
     private val recorder: IdealRecorder = IdealRecorder.getInstance()
     private var saveFile = File(context.filesDir, "kepler.wav")
 
 
     private var recordData: ByteArray = byteArrayOf()
-    private var onSpeak: ((Int) -> Unit)? = null
 
     var recording: Boolean = false
 
-    fun init(onSpeak: ((Int) -> Unit)) {
-        this.onSpeak = onSpeak
+    fun init() {
         recorder.init(context)
     }
 
@@ -38,12 +32,12 @@ class RecorderClient(private val context: Context) : StatusListener() {
             sampleRate = 48000
         }
         recorder.apply {
-            saveFile = File(context.filesDir, "kepler" + System.currentTimeMillis() + ".wav")
+            saveFile = File(context.filesDir, "kepler.wav")
             setRecordFilePath(saveFile.absolutePath)
             setRecordConfig(config)
             setMaxRecordTime(Long.MAX_VALUE)
             setVolumeInterval(1000)
-            setStatusListener(this@RecorderClient)
+            setStatusListener(this@AudioRecordClient)
             start()
         }
     }
@@ -75,12 +69,9 @@ class RecorderClient(private val context: Context) : StatusListener() {
             return stream
         }
 
-        stop()
-
         val stream = takeFile()
         // val stream = takeByte()
 
-        start()
         return stream
     }
 
@@ -105,11 +96,10 @@ class RecorderClient(private val context: Context) : StatusListener() {
     override fun onRecordData(data: ShortArray?, length: Int) {
         // Log.i(TAG, "recorder data1, $length")
 
-        recordData += BytesTransUtil.getInstance().Shorts2Bytes(data)
+        // recordData += BytesTransUtil.getInstance().Shorts2Bytes(data)
         val v = calculateVolume(data!!, length)
         if (v > MAX_VOLUME) {
-            onSpeak?.let { it(v) }
-            Log.d(TAG, "volume value: $v")
+            // Log.i(TAG, "volume value: $v")
         }
     }
 
