@@ -14,6 +14,11 @@ import androidx.camera.core.ImageAnalysis
 import kotlinx.coroutines.delay
 import java.util.LinkedList
 
+interface AudioPlayCallback {
+    fun start()
+    fun stop()
+}
+
 class KeplerClient(private val context: Context, private val messageType: String = MESSAGE_TYPE_IMAGE) {
     // Major components
     private lateinit var zhiPuAiClient: ZhiPuGLMClient
@@ -27,7 +32,12 @@ class KeplerClient(private val context: Context, private val messageType: String
     private lateinit var scheduledExecutorService: ScheduledExecutorService
     private var audios: LinkedList<String> = LinkedList()
 
-    fun init() {
+    private var audioPlayCallback: AudioPlayCallback? = null
+    private var started = false
+
+    fun init(audioPlay: AudioPlayCallback?) {
+        this.audioPlayCallback = audioPlay
+
         audioPlayClient = AudioPlayClient(context).apply { init() }
         audioRecordClient = AudioRecordClient(context).apply { init() }
 
@@ -42,10 +52,15 @@ class KeplerClient(private val context: Context, private val messageType: String
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
         scheduledExecutorService.scheduleWithFixedDelay({
             if (audios.isEmpty()) collect()
-        }, 1, FIXED_INTERVAL, TimeUnit.SECONDS)
+        }, 1, FIXED_INTERVAL, TimeUnit.MILLISECONDS)
     }
 
     fun start(imageCapture: ImageCapture?) {
+        if (started) {
+            Log.w(TAG, "kepler client is start")
+            return
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             zhiPuAiClient.connect()
 
@@ -54,10 +69,16 @@ class KeplerClient(private val context: Context, private val messageType: String
             cameraImageClient.start(imageCapture!!)
 
             playAudio()
+            started = true
         }
     }
 
     fun start(imageAnalysis: ImageAnalysis?) {
+        if (started) {
+            Log.w(TAG, "kepler client is start")
+            return
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             zhiPuAiClient.connect()
 
@@ -66,6 +87,7 @@ class KeplerClient(private val context: Context, private val messageType: String
             cameraVideoClient.start(imageAnalysis!!)
 
             playAudio()
+            started = true
         }
     }
 
@@ -82,6 +104,7 @@ class KeplerClient(private val context: Context, private val messageType: String
         }
 
         scheduledExecutorService.shutdown()
+        started = false
     }
 
     private suspend fun playAudio() {
@@ -93,8 +116,12 @@ class KeplerClient(private val context: Context, private val messageType: String
 
             val data = audios.removeFirst()
             if (data == "finish") {
+                audioPlayCallback?.stop()
                 audioRecordClient.start()
+                // 防止变成话痨
+                delay(300)
             } else {
+                audioPlayCallback?.start()
                 if (audioRecordClient.recording) { audioRecordClient.stop() }
                 val audio = Base64.decode(data, Base64.NO_WRAP)
                 audioPlayClient.play(audio)
@@ -138,7 +165,7 @@ class KeplerClient(private val context: Context, private val messageType: String
 
     companion object {
         private const val TAG = "KeplerClient"
-        private const val FIXED_INTERVAL = 2L
+        private const val FIXED_INTERVAL = 1500L
 
         const val MESSAGE_TYPE_IMAGE = "image"
         const val MESSAGE_TYPE_VIDEO = "video"

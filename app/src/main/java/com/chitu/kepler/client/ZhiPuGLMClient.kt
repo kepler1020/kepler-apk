@@ -79,8 +79,12 @@ class ZhiPuGLMClient(private val context: Context, private val callback:(String)
     }
 
     fun connect() {
-        wsClient = XWebSocket(this)
-        wsClient?.connect()
+        if (wsClient == null) {
+            wsClient = XWebSocket(this)
+            wsClient?.connect()
+        } else {
+            Log.e(TAG, "wsclient is connected")
+        }
     }
 
     fun sendImage(image: String, audio: String) {

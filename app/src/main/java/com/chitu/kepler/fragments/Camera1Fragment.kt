@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.hardware.display.DisplayManager
 import android.os.Bundle
@@ -45,9 +44,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.Navigation
 import androidx.window.WindowManager
-import com.chitu.kepler.KEY_EVENT_ACTION
 import com.chitu.kepler.KEY_EVENT_EXTRA
 import com.chitu.kepler.R
+import com.chitu.kepler.client.AudioPlayCallback
 import com.chitu.kepler.client.KeplerClient
 import com.chitu.kepler.client.KeplerClient.Companion.MESSAGE_TYPE_IMAGE
 import com.chitu.kepler.databinding.CameraUiContainerBinding
@@ -177,7 +176,21 @@ class Camera1Fragment : Fragment() {
         // Initialize WindowManager to retrieve display metrics
         windowManager = WindowManager(view.context)
 
-        keplerClient = KeplerClient(requireContext(), MESSAGE_TYPE_IMAGE).apply { init() }
+        keplerClient = KeplerClient(requireContext(), MESSAGE_TYPE_IMAGE).apply {
+            init(object : AudioPlayCallback {
+                override fun start() {
+                    lifecycleScope.launch {
+                        cameraUiContainerBinding?.audioPlayIcon?.isVisible = true
+                    }
+                }
+
+                override fun stop() {
+                    lifecycleScope.launch {
+                        cameraUiContainerBinding?.audioPlayIcon?.isVisible = false
+                    }
+                }
+            })
+        }
 
         // Wait for the views to be properly laid out
         fragmentCameraBinding.viewFinder.post {
@@ -438,6 +451,7 @@ class Camera1Fragment : Fragment() {
         }
 
         // Listener for button used to capture photo
+        cameraUiContainerBinding?.audioPlayIcon?.isVisible = false
         cameraUiContainerBinding?.cameraCaptureButton?.isVisible = false
         cameraUiContainerBinding?.cameraCaptureButton?.setOnClickListener {
             // imgCaptureClient.takePicture(imageCapture)

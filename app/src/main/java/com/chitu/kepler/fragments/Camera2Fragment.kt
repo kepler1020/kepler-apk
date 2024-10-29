@@ -13,13 +13,8 @@ import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import androidx.camera.video.Recorder
-import androidx.camera.video.VideoCapture
 import androidx.concurrent.futures.await
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -27,11 +22,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
 import androidx.window.WindowManager
 import com.chitu.kepler.R
+import com.chitu.kepler.client.AudioPlayCallback
 import com.chitu.kepler.client.KeplerClient
 import com.chitu.kepler.client.KeplerClient.Companion.MESSAGE_TYPE_VIDEO
 import com.chitu.kepler.databinding.CameraUiContainerBinding
 import com.chitu.kepler.databinding.FragmentCamera2Binding
-import com.chitu.kepler.utils.H264Encoder
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -105,7 +100,22 @@ class Camera2Fragment : Fragment() {
         // Initialize WindowManager to retrieve display metrics
         windowManager = WindowManager(view.context)
 
-        keplerClient = KeplerClient(requireContext(), MESSAGE_TYPE_VIDEO).apply { init() }
+        keplerClient = KeplerClient(requireContext(), MESSAGE_TYPE_VIDEO).apply {
+            init(object :
+                AudioPlayCallback {
+                override fun start() {
+                    lifecycleScope.launch {
+                        cameraUiContainerBinding?.audioPlayIcon?.isVisible = true
+                    }
+                }
+
+                override fun stop() {
+                    lifecycleScope.launch {
+                        cameraUiContainerBinding?.audioPlayIcon?.isVisible = false
+                    }
+                }
+            })
+        }
 
         // Wait for the views to be properly laid out
         fragmentCameraBinding.viewFinder.post {

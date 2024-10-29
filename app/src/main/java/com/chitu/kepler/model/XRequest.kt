@@ -7,7 +7,7 @@ data class VadConfig(
     var serverVad: Boolean = true,
 
     @SerializedName("finish_time")
-    var finishTime: Int = 60,
+    var finishTime: Int = 200,
 )
 
 data class AudioConfig(
