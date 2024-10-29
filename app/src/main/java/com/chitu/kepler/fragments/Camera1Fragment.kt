@@ -49,6 +49,7 @@ import com.chitu.kepler.KEY_EVENT_ACTION
 import com.chitu.kepler.KEY_EVENT_EXTRA
 import com.chitu.kepler.R
 import com.chitu.kepler.client.KeplerClient
+import com.chitu.kepler.client.KeplerClient.Companion.MESSAGE_TYPE_IMAGE
 import com.chitu.kepler.databinding.CameraUiContainerBinding
 import com.chitu.kepler.databinding.FragmentCamera1Binding
 import com.chitu.kepler.utils.simulateClick
@@ -176,10 +177,7 @@ class Camera1Fragment : Fragment() {
         // Initialize WindowManager to retrieve display metrics
         windowManager = WindowManager(view.context)
 
-
-        keplerClient = KeplerClient(requireContext()).apply {
-            init()
-        }
+        keplerClient = KeplerClient(requireContext(), MESSAGE_TYPE_IMAGE).apply { init() }
 
         // Wait for the views to be properly laid out
         fragmentCameraBinding.viewFinder.post {

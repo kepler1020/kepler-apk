@@ -3,6 +3,7 @@ package com.chitu.kepler.utils
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.util.Log
 import androidx.camera.core.ImageProxy
 
 
@@ -32,12 +33,14 @@ class H264Encoder(val width: Int = 480, val height: Int = 640) {
     }
 
     fun encode(data: ByteArray): ByteArray {
-        val inputBufferIndex = mediaCodec.dequeueInputBuffer(-1)
+        val inputBufferIndex = mediaCodec.dequeueInputBuffer(1000)
         if (inputBufferIndex >= 0) {
             val inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex)
             inputBuffer!!.put(data)
             mediaCodec.queueInputBuffer(inputBufferIndex, 0, data.size, 1000000, 0)
         }
+
+        // Log.d(">>>>>>> ", ".xxx size: ")
 
         var h264Data = byteArrayOf()
         val bufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
@@ -49,6 +52,7 @@ class H264Encoder(val width: Int = 480, val height: Int = 640) {
             outputBuffer.get(h264Data)
             mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
         }
+        // Log.d(">>>>>>> ", "..xxx size: ")
         return h264Data
     }
 

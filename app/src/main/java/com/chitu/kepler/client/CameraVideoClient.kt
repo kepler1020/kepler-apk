@@ -10,34 +10,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class CameraVideoClient(private val context: Context) {
     private lateinit var cameraExecutor: ExecutorService
-    private val originQueue = ArrayBlockingQueue<ByteArray>(1000, true)
-    private val encodeQueue = ArrayBlockingQueue<ByteArray>(1000, true)
-    private lateinit var h264Encoder: H264Encoder
+    private val originQueue = ArrayBlockingQueue<ByteArray>(100, true)
 
     private var isStop = false
-    private val lock = ReentrantReadWriteLock()
-    private val readLock = lock.readLock()
-    private val writeLock = lock.writeLock()
+    private var isTake = false
 
     private var videoFile = File(context.filesDir, "kepler.h264")
 
     fun init() {
         cameraExecutor = Executors.newSingleThreadExecutor()
-        h264Encoder = H264Encoder().apply { init() }
     }
 
     fun start(imageAnalysis: ImageAnalysis) {
-        CoroutineScope(Dispatchers.IO).launch {
-            encodeTask()
-        }
-
         imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
             setImage(imageProxy)
             imageProxy.close()
@@ -50,39 +44,46 @@ class CameraVideoClient(private val context: Context) {
         Log.i(TAG, "video recording stop")
     }
 
-    fun setImage(imageProxy: ImageProxy) {
+    private fun setImage(imageProxy: ImageProxy) {
+        if (isTake) return
+
+        Log.e(TAG, "insert video image")
         val data = H264Encoder.getYUVDataFromImageProxy(imageProxy)
         originQueue.offer(data)
     }
 
     fun takeVideo(): ByteArray {
+        isTake = true
         var data = byteArrayOf()
 
-        while (encodeQueue.isNotEmpty()) {
-            data += encodeQueue.poll()!!
+        Log.d(TAG, "start take video")
+        val h264Encoder = H264Encoder().apply { init() }
+        while (originQueue.isNotEmpty()) {
+            Log.d(TAG, ".queue size: ${originQueue.size}, ${data.size}")
+            val d = originQueue.poll(100, TimeUnit.MILLISECONDS) ?: break
+            Log.d(TAG, "..queue size: ${originQueue.size}, ${data.size}")
+            data += h264Encoder.encode(d)
+
+            Log.d(TAG, "...queue size: ${originQueue.size}, ${data.size}")
+            if (data.size > 500 * 1024) break
         }
-        h264Encoder = H264Encoder().apply { init() }
+        isTake = false
 
         // 测试验证
-        // videoFile = File(context.filesDir, "kepler." + System.currentTimeMillis() + ".h264")
-        // FileOutputStream(videoFile).use { stream ->
-        //     stream.write(data)
-        //     stream.close()
-        // }
-
-        return data
-    }
-
-    private fun encodeTask() {
-        while (!isStop) {
-            val data = originQueue.poll()
-            if (data != null && data.isNotEmpty()) {
-                val encode = h264Encoder.encode(data)
-                if (encode.isNotEmpty()) {
-                    encodeQueue.offer(encode)
-                }
-            }
+        if (data.isEmpty()) {
+            Log.e(TAG, "take empty video")
+            return data
         }
+
+        val time = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
+        videoFile = File(context.filesDir, "kepler-${time}.h264")
+        FileOutputStream(videoFile).use { stream ->
+            stream.write(data)
+            stream.close()
+        }
+
+        Log.e(TAG, "take video size: ${data.size}")
+        return data
     }
 
     companion object {

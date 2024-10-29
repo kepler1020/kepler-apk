@@ -9,9 +9,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import android.util.Base64
+import android.util.Log
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.video.VideoCapture
-import androidx.camera.video.Recorder
 import kotlinx.coroutines.delay
 import java.util.LinkedList
 
@@ -126,18 +125,22 @@ class KeplerClient(private val context: Context, private val messageType: String
 
     private fun sendVideo() {
         val audio = audioRecordClient.takeAudio()
+        Log.i(TAG, "take audio data")
         val video = cameraVideoClient.takeVideo()
+        Log.i(TAG, "take video data")
 
         val b64Audio = Base64.encodeToString(audio, Base64.NO_WRAP)
         val b64Video = Base64.encodeToString(video, Base64.NO_WRAP)
 
+        Log.i(TAG, "take data finish")
         zhiPuAiClient.sendVideo(b64Video, b64Audio)
     }
 
     companion object {
+        private const val TAG = "KeplerClient"
         private const val FIXED_INTERVAL = 2L
 
-        private const val MESSAGE_TYPE_IMAGE = "image"
-        private const val MESSAGE_TYPE_VIDEO = "video"
+        const val MESSAGE_TYPE_IMAGE = "image"
+        const val MESSAGE_TYPE_VIDEO = "video"
     }
 }

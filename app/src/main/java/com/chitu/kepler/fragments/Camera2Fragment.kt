@@ -28,6 +28,7 @@ import androidx.navigation.Navigation
 import androidx.window.WindowManager
 import com.chitu.kepler.R
 import com.chitu.kepler.client.KeplerClient
+import com.chitu.kepler.client.KeplerClient.Companion.MESSAGE_TYPE_VIDEO
 import com.chitu.kepler.databinding.CameraUiContainerBinding
 import com.chitu.kepler.databinding.FragmentCamera2Binding
 import com.chitu.kepler.utils.H264Encoder
@@ -101,14 +102,10 @@ class Camera2Fragment : Fragment() {
         // Initialize our background executor
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-
         // Initialize WindowManager to retrieve display metrics
         windowManager = WindowManager(view.context)
 
-
-        keplerClient = KeplerClient(requireContext()).apply {
-            init()
-        }
+        keplerClient = KeplerClient(requireContext(), MESSAGE_TYPE_VIDEO).apply { init() }
 
         // Wait for the views to be properly laid out
         fragmentCameraBinding.viewFinder.post {
